@@ -1,0 +1,134 @@
+Excellent 👌 ta capture montre maintenant que tu as bien la souscription “High Availability for IBM Power, LE” (contrat visible sur la ligne du bas) 🎯
+
+👉 Donc, tout est prêt côté abonnement.
+Le Satellite devrait maintenant te proposer les dépôts HA Power — il suffit juste de les rafraîchir et de les activer.
+
+
+---
+
+🧩 1️⃣ Rafraîchir la liste des dépôts disponibles pour ce produit Power LE
+
+Tu avais déjà identifié que ton produit “Red Hat Enterprise Linux for Power, little endian” a l’ID 105, donc exécute :
+
+hammer repository-set refresh --organization "BP2I AIX" --product-id 105
+
+💡 Cette commande force Satellite à récupérer les nouveaux repository sets disponibles depuis Red Hat CDN (y compris ceux liés à la souscription HA Power LE).
+
+
+---
+
+🧩 2️⃣ Lister les dépôts disponibles pour ce produit
+
+Une fois le rafraîchissement terminé :
+
+hammer repository-set list --organization "BP2I AIX" --product-id 105 | grep -i "High"
+
+Tu devrais maintenant voir apparaître :
+
+Red Hat Enterprise Linux 8 for Power, little endian - High Availability (RPMs)
+Red Hat Enterprise Linux 9 for Power, little endian - High Availability (RPMs)
+
+
+---
+
+🧩 3️⃣ Vérifier les versions disponibles pour chaque dépôt
+
+➤ Pour RHEL 8 :
+
+hammer repository-set info \
+  --organization "BP2I AIX" \
+  --product-id 105 \
+  --name "Red Hat Enterprise Linux 8 for Power, little endian - High Availability (RPMs)"
+
+➤ Pour RHEL 9 :
+
+hammer repository-set info \
+  --organization "BP2I AIX" \
+  --product-id 105 \
+  --name "Red Hat Enterprise Linux 9 for Power, little endian - High Availability (RPMs)"
+
+Cela affichera les versions disponibles (ex : 8.7, 8.8, 9.2, 9.4, etc.).
+
+
+---
+
+🧩 4️⃣ Activer les dépôts pour 8.8 et 9.4
+
+➤ Pour RHEL 8.8 ppc64le :
+
+hammer repository-set enable \
+  --organization "BP2I AIX" \
+  --product-id 105 \
+  --name "Red Hat Enterprise Linux 8 for Power, little endian - High Availability (RPMs)" \
+  --releasever "8.8" \
+  --basearch "ppc64le"
+
+➤ Pour RHEL 9.4 ppc64le :
+
+hammer repository-set enable \
+  --organization "BP2I AIX" \
+  --product-id 105 \
+  --name "Red Hat Enterprise Linux 9 for Power, little endian - High Availability (RPMs)" \
+  --releasever "9.4" \
+  --basearch "ppc64le"
+
+
+---
+
+🧩 5️⃣ Vérifier l’activation
+
+hammer repository list --organization "BP2I AIX" --product-id 105 | grep -i "High"
+
+Tu devrais voir :
+
+Red Hat Enterprise Linux 8 for Power, little endian - High Availability (RPMs) 8.8
+Red Hat Enterprise Linux 9 for Power, little endian - High Availability (RPMs) 9.4
+
+
+---
+
+🧩 6️⃣ Synchroniser les dépôts
+
+hammer repository synchronize \
+  --organization "BP2I AIX" \
+  --product-id 105 \
+  --name "Red Hat Enterprise Linux 8 for Power, little endian - High Availability (RPMs) 8.8"
+
+hammer repository synchronize \
+  --organization "BP2I AIX" \
+  --product-id 105 \
+  --name "Red Hat Enterprise Linux 9 for Power, little endian - High Availability (RPMs) 9.4"
+
+
+---
+
+🧩 7️⃣ Ajouter à tes Content Views
+
+Ensuite, ajoute-les à :
+
+RHEL 8.8 ppc64le
+
+RHEL 9.4 ppc64le
+
+
+Puis republie tes Content Views et ta CCV.
+
+
+---
+
+✅ En résumé :
+
+Étape	Action	Commande clé
+
+1	Rafraîchir les repo-sets	hammer repository-set refresh --product-id 105
+2	Lister les HA disponibles	`hammer repository-set list ...
+3	Activer 8.8 & 9.4	hammer repository-set enable ...
+4	Vérifier	`hammer repository list ...
+5	Synchroniser	hammer repository synchronize ...
+
+
+
+---
+
+Souhaites-tu que je t’envoie aussi les commandes pour les lier automatiquement à tes Content Views et republier ta CCV (pour éviter de le faire à la main dans l’interface) ?
+
