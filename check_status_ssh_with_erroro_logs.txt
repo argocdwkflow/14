@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Usage: ./check_ssh_status_simple.sh -f hosts.txt [-t 8] [-e erreurs.txt]
+#./check_ssh_status_simple.sh -f hosts.txt -t 8 -e erreurs.txt
+# ... affichage ...
+# Hôtes en erreur sauvegardés dans: erreurs.txt
 # -f : fichier des hôtes (un par ligne)
 # -t : timeout (défaut 10s)
 # -e : fichier où enregistrer UNIQUEMENT les hôtes en erreur (TIMEOUT/FAILED)
