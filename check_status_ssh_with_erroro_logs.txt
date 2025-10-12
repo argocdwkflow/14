@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Usage: ./check_ssh_status_simple.sh -f hosts.txt [-t 8] [-e erreurs.txt]
+# -f : fichier des hôtes (un par ligne)
+# -t : timeout (défaut 10s)
+# -e : fichier où enregistrer UNIQUEMENT les hôtes en erreur (TIMEOUT/FAILED)
+
+set -u
+
+HOSTFILE=""
+TIMEOUT_SECS=10
+ERRFILE=""
+
+while getopts "f:t:e:h" opt; do
+  case "$opt" in
+    f) HOSTFILE="$OPTARG" ;;
+    t) TIMEOUT_SECS="$OPTARG" ;;
+    e) ERRFILE="$OPTARG" ;;
+    h) echo "Usage: $0 -f hosts.txt [-t timeout] [-e erreurs.txt]"; exit 0 ;;
+    *) exit 1 ;;
+  esac
+done
+
+[[ -z "$HOSTFILE" || ! -r "$HOSTFILE" ]] && { echo "ERREUR: fichier hosts invalide."; exit 1; }
+command -v timeout >/dev/null 2>&1 || { echo "Le binaire 'timeout' est requis."; exit 1; }
+[[ -n "$ERRFILE" ]] && : > "$ERRFILE"   # vide/initialise le fichier erreurs s'il est défini
+
+echo
+printf "%-30s %-10s %s\n" "HOST" "STATUS" "MESSAGE"
+printf "%0.s-" {1..70}; echo
+
+declare -A CNT=([OK]=0 [TIMEOUT]=0 [FAILED]=0)
+
+check_host() {
+  local host="$1"
+  local out rc status msg
+  out="$(timeout "$TIMEOUT_SECS" ssh "$host" 'echo SSH_OK' 2>&1)"
+  rc=$?
+  if [[ $rc -eq 0 && "$out" == *"SSH_OK"* ]]; then
+    status="OK"; msg="Connexion OK"
+  elif [[ $rc -eq 124 ]]; then
+    status="TIMEOUT"; msg="Aucune réponse (timeout)"
+  else
+    status="FAILED"; msg="$(echo "$out" | tr '\n' ' ' | cut -c1-100)"
+  fi
+  (( CNT[$status]++ ))
+  printf "%-30s %-10s %s\n" "$host" "$status" "$msg"
+
+  # Enregistrement des seuls hôtes en erreur
+  if [[ -n "$ERRFILE" && "$status" != "OK" ]]; then
+    printf "%s\n" "$host" >> "$ERRFILE"
+  fi
+}
+
+while IFS= read -r host || [[ -n "$host" ]]; do
+  host="$(echo "$host" | sed 's/^[ \t]*//;s/[ \t]*$//')"
+  [[ -z "$host" || "$host" =~ ^# ]] && continue
+  check_host "$host" &
+  sleep 0.1
+done < "$HOSTFILE"
+
+wait
+printf "%0.s-" {1..70}; echo
+echo "Résumé :"
+for k in OK TIMEOUT FAILED; do
+  printf "  %-10s : %d\n" "$k" "${CNT[$k]}"
+done
+
+# Info de fin si fichier erreurs demandé
+[[ -n "$ERRFILE" ]] && echo "Hôtes en erreur sauvegardés dans: $ERRFILE"
