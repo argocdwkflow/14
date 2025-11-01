@@ -1,0 +1,97 @@
+Excellent 👍
+Tu fais bien référence à Kalance — c’est l’un des outils modernes pour analyser la compatibilité et la signature des modules kernel (notamment avant activation de Secure Boot ou en contexte RHEL 8 / RHEL 9).
+
+Voici le récapitulatif détaillé 👇
+
+
+---
+
+🧠 1️⃣ Kalance
+
+Objectif :
+Vérifier la cohérence, la conformité et la sécurité des modules kernel installés ou chargés.
+
+Fonctions principales :
+
+Détection des modules non signés (risque de kernel panic sous Secure Boot)
+
+Analyse des dépendances (modinfo, lsmod, modprobe)
+
+Vérification de compatibilité avec la version de kernel courante
+
+Audit de signature numérique via modsig
+
+Intégration possible avec mokutil / keyctl / kmod verify
+
+
+Commandes associées :
+
+kalance scan
+kalance verify --module /lib/modules/$(uname -r)/extra/seos.ko
+
+
+---
+
+🧩 2️⃣ dracut/lsmod/kmod-compliance (outil Red Hat officiel)
+
+Objectif :
+Vérifier les modules lors de la création de l’initramfs et de leur chargement.
+
+Commandes utiles :
+
+dracut --check --verbose
+modinfo <module_name>
+kmod verify
+
+> kmod verify est introduit à partir de RHEL 9.2 pour vérifier la signature et l’intégrité d’un module.
+
+
+
+
+---
+
+🧮 3️⃣ modsig / keyutils / mokutil (validation Secure Boot)
+
+Ces outils permettent de valider la signature cryptographique des modules :
+
+mokutil --sb-state
+keyctl show %:.system_keyring
+modsig verify <module.ko>
+
+
+---
+
+🧰 4️⃣ autres outils ou compléments
+
+Outil	Fonction principale	Compatibilité
+
+abrt-cli	Détection d’anomalies kernel panic	RHEL 8/9
+kernelcarectl	Vérifie et applique live-patchs kernel	RHEL 7→9
+fapolicyd	Contrôle d’intégrité et whitelist des binaires/modules	RHEL 9
+systemd-analyze verify	Vérification intégrale du boot, y compris des unités liées aux modules	RHEL 8/9
+
+
+
+---
+
+🔐 Exemple complet de workflow sous RHEL 9 :
+
+# Vérifier l'état Secure Boot
+mokutil --sb-state
+
+# Lister les modules chargés
+lsmod
+
+# Vérifier la signature du module
+modinfo seos | grep signer
+
+# Vérifier compatibilité / signature
+kmod verify /lib/modules/$(uname -r)/extra/seos.ko
+
+# Scan complet Kalance
+kalance scan --all
+
+
+---
+
+Souhaites-tu que je te fasse un tableau comparatif (Kalance vs kmod verify vs fapolicyd) pour l’ajouter dans ta documentation Satellite/RHEL 9 ?
