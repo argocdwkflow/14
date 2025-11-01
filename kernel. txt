@@ -216,4 +216,148 @@ et qui te retourne un rapport JSON du type :
   "oscap_status": "compliant"
 }
 
-Ce serait parfait à intégrer dans bp2iutils/sysfacts.kernel_security.fact ?
+Ce serait parfait à intégrer dans obsutils/sysfacts.kernel_security.fact ?
+
+Très bonne relance  👏 — tu veux parler d’un outil moderne (post-RHEL 9, typé “next-gen”) pour vérifier la sécurité et la stabilité des modules kernel, au-delà des classiques (modinfo, mokutil, fapolicyd, oscap, etc.).
+
+👉 En RHEL 9 et au-delà (RHEL 9.3+ / 9.4 / early 10), Red Hat pousse désormais une nouvelle génération d’outils modernes et intégrés pour la sécurité du kernel et des modules :
+
+
+---
+
+🧠 1. tuned + kernel_settings (Ansible System Role moderne)
+
+Outil officiel Red Hat System Role pour vérifier et appliquer les paramètres sécurisés du noyau.
+
+Il permet d’auditer et d’appliquer : signature de modules, désactivation de chargement dynamique, hardening sysctl, etc.
+
+
+ansible-playbook -m include_role -a name=rhel-system-roles.kernel_settings play.yml
+
+✅ 100 % compatible RHEL 9 / AAP 2.x
+🔹 Très moderne, car utilisé via Ansible et GitLab CI/CD.
+
+
+---
+
+🧩 2. tetragon (Cilium / eBPF Security Monitor)
+
+> Outil moderne open-source (by Isovalent / Cilium) pour surveiller et auditer les actions kernel en live via eBPF.
+
+
+
+Détecte tout chargement de module, syscall, modification mémoire ou tentative d’accès root-kit.
+
+Permet d’écrire des règles eBPF pour bloquer un module dangereux avant qu’il provoque un kernel panic.
+
+
+tetragon --export-file tetragon.json
+
+✅ Fonctionne sur RHEL 9, Fedora, Ubuntu, et compatible avec Secure Boot si eBPF activé.
+💡 Très utilisé dans les environnements Cloud Native / SOC Red Hat ACS / OpenShift.
+
+
+---
+
+🧰 3. tracee (Aqua Security / Falco-like)
+
+> Outil moderne basé sur eBPF, développé par Aqua Security.
+Il surveille les appels kernel et les chargements de modules en temps réel.
+
+
+
+Alerte si un .ko non signé est inséré.
+
+Peut bloquer ou journaliser toute tentative avant panic.
+
+
+tracee --trace comm=modprobe
+
+✅ Compatible RHEL 9 / Fedora 38+ / OpenShift 4.x.
+🔒 Intègre les règles MITRE ATT&CK pour détection kernel-rootkit.
+
+
+---
+
+🧱 4. grubby + kernel-lockdown (mode moderne Secure Boot)
+
+Depuis RHEL 9.2+, Red Hat a ajouté kernel lockdown mode :
+verrouille toutes les opérations d’insertion de modules non signés.
+
+L’état peut être vérifié avec :
+
+
+cat /sys/kernel/security/lockdown
+
+Tu peux activer ce mode via :
+
+
+grubby --update-kernel=ALL --args="lockdown=confidentiality"
+
+✅ Modern kernel feature pour éviter les panics dus à des modules non approuvés.
+
+
+---
+
+🧩 5. abrt + sosreport kernel plugin (modern RHEL 9 crash diagnostics)
+
+Les versions récentes d’ABRT collectent automatiquement les traces des kernel oops et modules fautifs.
+
+En conjonction avec sosreport --only-plugins kernel, on peut détecter les modules responsables des panics.
+
+
+abrt-cli list
+sosreport --only-plugins kernel
+
+✅ Moderne, intégré, support Red Hat officiel.
+
+
+---
+
+⚙️ 6. syzkaller / syzbot (fuzzing kernel moderne)
+
+> Google / Red Hat utilisent cet outil pour fuzzer le kernel et tester la stabilité des modules.
+
+
+
+Non destiné à la prod, mais parfait pour test QA : détecte panics, use-after-free, invalid access.
+
+Disponible dans les lab RHEL via syzkaller ou container image.
+
+
+
+---
+
+🔍 7. kernel-guardian (Red Hat Prototype – RHEL 10 preview)
+
+> Nouveau framework Red Hat Security Technology Preview pour auditer la conformité kernel et modules.
+
+
+
+Basé sur IMA + TPM 2.0 + eBPF.
+
+Donne un score de “kernel trust level”.
+
+
+💡 Prévu pour RHEL 10 / RHEL 9.4 preview (nom de code : “Guardian”).
+
+
+---
+
+✅ En résumé — outils modernes (post RHEL 9) pour la sécurité et stabilité des modules
+
+Catégorie	Outil moderne	Fonction principale
+
+Ansible / Compliance	rhel-system-roles.kernel_settings	Audit automatisé du kernel
+Runtime eBPF monitoring	tetragon, tracee	Détection & blocage de modules dangereux
+Secure Boot hardening	kernel-lockdown, grubby	Verrouillage des insertions non signées
+Crash & Diagnostics	abrt, sosreport kernel	Analyse des panics liés aux modules
+Fuzzing / Test QA	syzkaller	Détection de panics potentiels
+Future Red Hat tooling	kernel-guardian	Vérification de confiance TPM/eBPF
+
+
+
+---
+
+Souhaites-tu que je te fasse un tableau “modern security stack kernel RHEL 9/10” (avec description, package, chemin binaire, intégration AAP/Satellite) ?
+Ça pourrait servir pour ton runbook “kernel compliance fact” obsutils.
