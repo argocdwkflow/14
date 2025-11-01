@@ -1,0 +1,129 @@
+Parfait ✅ tu fais référence au deuxième outil officiel annoncé par Red Hat dans la documentation RHEL 9, celui basé sur DNF et le Kernel ABI Stable Lists plugin.
+C’est effectivement un outil intégré depuis RHEL 9 pour valider la compatibilité des modules kernel tiers (kmods) avec le noyau Red Hat.
+
+Voici le détail complet 👇
+
+
+---
+
+🧩 2. DNF Plugin — kernel-abi-stablelists
+
+📘 Présentation officielle (Red Hat Doc RHEL 9)
+
+> “The kernel-abi-stablelists package provides the list of stable kernel symbols for external module validation and a DNF plugin to enforce kernel ABI compatibility.”
+
+
+
+👉 Référence :
+📄 Red Hat Enterprise Linux 9 — Managing, monitoring, and updating the kernel
+Section : “Using the kernel ABI stable list to verify external kernel module compatibility”
+
+
+---
+
+🧠 Objectif
+
+Cet outil permet de :
+
+Vérifier la compatibilité ABI entre un module tiers et le kernel installé.
+
+Empêcher l’installation de modules RPM non compatibles (ex : DKMS ou kmod tiers).
+
+Garantir que seules les fonctions/symboles “stables” du kernel sont utilisés.
+
+
+
+---
+
+⚙️ Installation
+
+dnf install kernel-abi-stablelists
+
+Cela installe :
+
+Les fichiers ABI stables :
+/usr/lib/modules/<version_kernel>/kernel/kabi_whitelist
+
+Le plugin DNF :
+/usr/lib/python3.9/site-packages/dnf-plugins/kernel_abi.py
+
+
+
+---
+
+🧪 Vérification / Utilisation
+
+1. Lister les symboles ABI stables :
+
+cat /usr/lib/modules/$(uname -r)/kabi_whitelist
+
+
+2. Tester un module externe (par ex. seos.ko) :
+
+/usr/libexec/kmodtool check-kabi /lib/modules/$(uname -r)/extra/seos.ko
+
+ou via DNF :
+
+dnf check-kabi <package-name>
+
+
+3. Lors d’une installation DNF, le plugin valide automatiquement :
+
+Running transaction check
+Checking kABI compatibility for module: seos.ko ... FAILED
+Error: module seos.ko not compliant with kernel ABI
+
+
+
+
+---
+
+🔒 Intégration Sécurité
+
+Couplé à :
+
+Secure Boot
+
+fapolicyd
+
+kmodsign / mokutil
+
+Insights – kernel compliance
+
+
+→ Tu obtiens un écosystème complet pour valider et sécuriser les modules chargés sur RHEL 9.
+
+
+---
+
+🧾 Exemple d’audit automatique
+
+#!/bin/bash
+echo "Kernel ABI check for external modules:"
+for mod in /lib/modules/$(uname -r)/extra/*.ko; do
+  echo "Checking $(basename $mod)..."
+  /usr/libexec/kmodtool check-kabi "$mod" || echo "⚠️ Non compliant: $mod"
+done
+
+Sortie :
+
+Checking seos.ko...
+⚠️ Non compliant: /lib/modules/5.14.0-362.24.1.el9_3.x86_64/extra/seos.ko
+
+
+---
+
+✅ En résumé
+
+Outil	Nom du paquet	Fonction
+
+DNF Kernel ABI Plugin	kernel-abi-stablelists	Vérifie la compatibilité ABI des modules
+Commande	dnf check-kabi ou kmodtool check-kabi	Validation automatique
+But	Éviter les modules non conformes au kernel RHEL 9	
+Doc Red Hat	“Managing, monitoring and updating the kernel” (Chapitre Kernel ABI Stable List)	
+
+
+
+---
+
+Souhaites-tu que je te montre un exemple concret de rapport de validation (JSON / lisible par Ansible) basé sur ce plugin DNF, que tu pourrais intégrer à ton projet
