@@ -1,0 +1,72 @@
+Excellent réflexe Hamza 👏 — tu penses très juste :
+dans l’écosystème RHEL 9 / kernel / conformité, il existe toute une série d’outils dont les noms commencent par la lettre “K”, souvent liés au kernel, à la compatibilité, ou à la sécurité.
+
+Voici la liste complète et classée par usage 👇
+
+
+---
+
+🧩 1. 🔧 Outils “K” de gestion et compatibilité du kernel
+
+Outil	Description	Utilité principale
+
+kmod	Gestion des modules du noyau (load/unload/list)	Base système, utilisé par modprobe, insmod, etc.
+kmodtool	Script Red Hat pour packager, vérifier et builder les modules kmod externes	Vérification conformité et packaging (kmod-<driver>)
+kmodsign	Signe ou vérifie les modules .ko (PKCS#7)	Vérifie la signature cryptographique du module
+kpatch	Live patch du noyau Red Hat	Vérifie compatibilité du patch binaire et du kernel courant
+kpatch-dnf	Plugin DNF pour appliquer automatiquement les live-patchs kernel	Automatisation conformité sécurité
+kexec	Charge un nouveau kernel sans redémarrer complètement la machine	Outil de diagnostic / crash recovery
+kdump	Capture un crash dump kernel (kexec-based crash dumping)	Vérification de stabilité et conformité crash
+kernel-install	Gère les installations de kernels dans /boot (systemd)	Utilisé lors des upgrades kernel
+kallsyms	Liste tous les symboles chargés dans le noyau	Debug / analyse compatibilité module
+kprobes	Framework du kernel pour tracer et tester des fonctions à chaud	Diagnostic bas-niveau / compatibilité module
+ksymoops (ancien)	Traduit les adresses d’un Oops en symboles	Debug kernel classique
+kmsg / dmesg	Affiche les logs du kernel	Détection des erreurs de chargement de modules
+kconfig / .config	Fichier de configuration du noyau	Vérifie les options activées (FIPS, SELinux, TPM…)
+
+
+
+---
+
+🔒 2. 🛡️ Outils “K” liés à la sécurité / conformité
+
+Outil	Description	Rôle conformité
+
+kmodsign	Signature et vérification PKCS#7 des modules kernel	✅ Vérifie conformité Secure Boot
+kpatch	Vérifie si les correctifs kernel live sont compatibles	✅ Conforme RHSA / CVE
+kexec + kdump	Validation crash kernel	✅ Stabilité / audit sécurité
+kernel-tools	Fournit kmodsign, cpupower, perf, etc.	✅ Paquet officiel Red Hat
+kernel-devel	Fournit headers et scripts pour compiler modules	✅ Vérification compatibilité build modules externes
+
+
+
+---
+
+⚙️ 3. 🧠 Outils de diagnostic ou de vérification avancée
+
+Outil	Description	Objectif
+
+kdb / kgdb	Débogue le kernel live ou en post-mortem	Debug crash kernel
+ktap / kprobe / kretprobe	Tracing dynamique du noyau	Performance / compatibilité
+ksm (Kernel Same-page Merging)	Optimisation mémoire	Vérification comportement kernel
+kexec-tools	Ensemble pour gérer crash dumps / reboots kernel	Diagnostic
+
+
+
+---
+
+✅ En résumé — les plus utilisés pour “vérifier la compatibilité et conformité kernel”
+
+Catégorie	Outils clés
+
+Signature & Secure Boot	kmodsign, mokutil, sbverify
+Live Patch & compatibilité	kpatch, kpatch-dnf
+Crash & stabilité kernel	kdump, kexec, dracut --verify
+Packaging & métadonnées	kmod, kmodtool, kernel-devel
+Debug symboles & logs	kallsyms, dmesg, kprobes
+
+
+
+---
+
+Souhaites-tu que je t’en fasse une checklist “conformité kernel RHEL 9” (avec toutes ces commandes, sorties attendues, et seuils “compliant / non-compliant”) — sous forme de script bash / facts JSON compatible avec ton écosystème 
