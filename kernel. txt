@@ -701,6 +701,154 @@ Souhaites-tu que je te prépare un comparatif technique détaillé entre Tetrago
 
 
 
+
+
+Sur RHEL 9, Red Hat a renforcé la vérification, la signature et la conformité des modules du kernel (surtout avec Secure Boot et fapolicy).
+Voici les outils officiels et reconnus pour vérifier, valider et diagnostiquer les modules du kernel :
+
+
+---
+
+🧩 1. modinfo
+
+Permet d’afficher toutes les métadonnées d’un module kernel (signature, version, licence, dépendances, etc.).
+
+Très utile pour vérifier si un module est bien signé et compatible avec le kernel courant.
+
+
+modinfo /lib/modules/$(uname -r)/extra/seos.ko
+
+À vérifier dans la sortie :
+
+signature: → indique si le module est signé
+
+vermagic: → doit correspondre exactement à uname -r
+
+depends: → dépendances satisfaites ou non
+
+license: → GPL ou propriétaire
+
+
+
+---
+
+🛡️ 2. kmodsign + keyctl + mokutil
+
+Ces outils gèrent la signature et la validation cryptographique des modules :
+
+kmodsign verify <public_key> <module.ko> → vérifie la signature manuellement
+
+mokutil --sb-state → indique si Secure Boot est activé
+
+keyctl list %:.system_keyring → liste les clés de signature connues par le kernel
+
+keyctl read %:.system_keyring → détaille les clés (utile pour confirmer si la clé Red Hat est chargée)
+
+
+
+---
+
+🔬 3. dracut et systemd-analyze verify
+
+Permettent d’analyser l’intégrité et la compatibilité du noyau et de ses dépendances :
+
+dracut -f --regenerate-all
+systemd-analyze verify
+
+dracut reconstruit l’initramfs et signale les modules incompatibles.
+
+systemd-analyze verify permet de vérifier les fichiers unit systemd et dépendances kernel.
+
+
+
+---
+
+⚙️ 4. kernel-install & depmod
+
+Vérifient la cohérence des dépendances entre modules :
+
+depmod -a
+modprobe -v <nom_du_module>
+
+→ Si le module échoue à se charger, le kernel log montrera la cause exacte (dmesg | tail -50).
+
+
+---
+
+🧠 5. kmodtool (utilitaire Red Hat)
+
+Outil Red Hat officiel pour la gestion de modules kernel packagés via RPM :
+
+kmodtool check-kmod <nom_du_paquet>
+
+Permet de vérifier si le module construit est bien compatible avec la version du kernel installée.
+
+(Disponible dans le paquet redhat-rpm-config ou kmodtool.)
+
+
+---
+
+🧰 6. fapolicyd et integrity (IMA/EVM)
+
+fapolicyd (File Access Policy Daemon) vérifie la conformité d’exécution des binaires et modules selon leur signature.
+
+Les modules non signés peuvent être bloqués si Secure Boot ou IMA/EVM sont activés.
+
+
+
+---
+
+🧾 7. journalctl -k / dmesg
+
+Permet de lire les logs du noyau pour toute erreur de chargement :
+
+journalctl -k | grep -i module
+dmesg | grep -i "not tainted"
+
+→ détecte les erreurs type :
+
+“module verification failed: signature and/or required key missing”
+
+“tainted kernel”
+
+
+
+---
+
+💡 Bonus moderne (RHEL 9+)
+
+ksp – Kernel Support Policy Utility (Red Hat Insights / Compliance)
+
+Intégré à RHEL 9 via insights-client.
+
+Permet de vérifier la conformité de modules tiers avec la politique de support Red Hat.
+
+
+insights-client --check-kmods
+
+
+---
+
+🔒 En résumé — les plus utiles au quotidien
+
+Objectif	Commande clé	Paquet
+
+Vérifier signature module	modinfo / kmodsign verify	kmod
+Vérifier Secure Boot actif	mokutil --sb-state	mokutil
+Vérifier compatibilité kernel	kmodtool check-kmod	kmodtool
+Détecter erreurs au chargement	dmesg, journalctl -k	inclus
+Vérifier conformité Red Hat	insights-client --check-kmods	insights-client
+
+
+
+---
+
+Souhaitez-vous que je te fasse un script complet de vérification automatique des modules (signature, version, clé, secure boot, et conformité RHEL 9) 
+
+
+
+
+
 Excellent réflexe 👏 — en plus des outils classiques ( modinfo, kmodsign, mokutil, kmodtool, fapolicyd …), RHEL 9 et l’écosystème Red Hat disposent aussi d’outils plus avancés ou spécialisés pour vérifier, auditer ou sécuriser les modules kernel.
 Voici la suite des outils modernes et experts, souvent utilisés dans les environnements sécurisés) 👇
 
